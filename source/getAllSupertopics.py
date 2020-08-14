@@ -18,8 +18,8 @@ def testLogIn():
 
 
 def testbrowser():
-    session = login.LogIn()
-    session.main()
+    #session = login.LogIn()
+    # session.main()
     browser.init()
     #result = browser.isPresent()
     #print('判断页面1成功 0失败  结果是=%d' % result)
