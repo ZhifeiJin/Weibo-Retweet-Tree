@@ -20,6 +20,7 @@ import requests
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+import csv
 
 
 def init():
@@ -28,7 +29,7 @@ def init():
 
     driver = webdriver.Chrome(
         executable_path="/Users/jinzhifei/anaconda3/lib/python3.7/site-packages/selenium/webdriver/chrome/chromedriver")
-    # driver.maximize_window()
+    driver.maximize_window()
     url = "https://huati.weibo.cn/discovery/super?suda"
     driver.get(url)
 
@@ -64,61 +65,38 @@ def init():
 
     class_list = driver.find_element_by_class_name(
         "superListBox")    # 执行页面定位语句
-    if not (class_list.is_displayed()):   # 判断是否允许访问
-        print("cannot find class_list\n")
-        driver.close()
-        return
-
     driver.implicitly_wait(20)
     superbox = class_list.find_element_by_id("cate_ul")
-    lists = superbox.find_elements_by_xpath("li[position()>=2]")
-    first = lists[0]
-    action = ActionChains(driver)
-    action.click(first).perform()
-    # driver.implicitly_wait(10)
+    supertopic_list = superbox.find_elements_by_xpath("li[position()>=2]")
+    #action = ActionChains(driver)
     userbox = driver.find_element_by_class_name(
         "super_users_box")
-    # scllor = WebDriverWait(driver, 10).until(
-    #    EC.visibility_of_element_located((By.CLASS_NAME, "super_scllor")))
-    # ActionChains(driver).move_to_element(scllor).perform()
-    print("开始下滑")
-    center_box = driver.find_element_by_class_name(
-        "m-box-center-a")
-    ActionChains(driver).click(center_box).perform()
+    fields = ['SuperTopic', 'Category', 'Id', 'Url', 'Follower', 'Posts']
+    for category in range(len(supertopic_list)):
+        topic = supertopic_list[category]
+        ActionChains(driver).click(topic).perform()
+        #center_box = driver.find_elements_by_class_name( "super_scllor")
+        print("开始下滑")
+        for i in range(1500):
+            ActionChains(driver).key_down(Keys.DOWN).perform()
+        print("滚动结束")
+        cardlist = driver.find_elements_by_class_name(
+            "card-list")[:-1]
+        print("总共有" + str(len(cardlist)))
+        for j in range(len(cardlist)):
+            element = cardlist[j]
+            supertopic = element.find_element_by_class_name("super_name")
+            super_name = supertopic.text
+            follower = ""
+            posts = ""
+            topic_url = ""
+            id = category*20 + j
+            result = [super_name, category, id, topic_url, follower, posts]
+            print(result)
 
-    for i in range(1500):
-        # driver.find_element_by_class_name("super_scllor").send_keys(Keys.DOWN)
-        ActionChains(driver).key_down(Keys.DOWN).perform()
-        # driver.implicitly_wait(100)
-        # time.sleep(5)
-        # print(i)
-        #js = "var q=document.querySelector(\".super_scllor\").scrollTop=100000"
-        # driver.execute_script(js)
-        #ActionChains(driver).move_by_offset(0, 50).perform()
-        # driver.implicitly_wait(30)
-
-        # driver.implicitly_wait(20)
-    #js = "var q=document.documentElement.scrollTop=500"
-    # driver.execute_script(js)
-    print("滚动结束")
-
-    #source_code = scllor.get_attribute("outerHTML")
-    # print(source_code)
-    cardlist = driver.find_elements_by_class_name(
-        "card-list")[:-1]
-    print("总共有" + str(len(cardlist)))
-    for i in range(len(cardlist)):
-        #xpath = "//a/div/div/*[2]"
-        element = cardlist[i]
-        supertopic = element.find_element_by_class_name("super_name")
-        # supertopic = .find_element_by_xpath(xpath)
-        # #title = supertopic.find_element_by_xpath("//div/em")
-        print(supertopic.text)
-        # cardnext = i.find_elements_by_xpath("//div/following-sibling::p")
-        #source_code = str(i) + ": " + cardlist[i].get_attribute("outerHTML") + "\n"
-        # print(source_code)
     print("ready to close\n")
     driver.close()
+    driver.quit()
 
 
 """
