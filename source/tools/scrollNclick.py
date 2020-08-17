@@ -21,9 +21,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import csv
+import re
 
 
 def init():
+    start = time.clock()
     username = 'raymondsun97@yahoo.com'  # 微博账号
     password = '68458173'  # 微博密码
 
@@ -53,7 +55,6 @@ def init():
     c = [driver.add_cookie(c) for c in response_cookies_browser]
     driver.implicitly_wait(10)     # 等待时间
     # the browser now contains the cookies generated from the authentication
-    # driver.get(url)
 
     #options = webdriver.ChromeOptions()
     # options.add_argument('--headless')    # 不打开浏览器
@@ -63,38 +64,36 @@ def init():
     # options.add_argument('proxy-server="60.13.42.109:9999"')    # 添加代理
     # driver = webdriver.Chrome(options=options)   # 使用驱动配置
 
-    class_list = driver.find_element_by_class_name(
-        "superListBox")    # 执行页面定位语句
-    driver.implicitly_wait(20)
-    superbox = class_list.find_element_by_id("cate_ul")
-    supertopic_list = superbox.find_elements_by_xpath("li[position()>=2]")
-    #action = ActionChains(driver)
-    userbox = driver.find_element_by_class_name(
-        "super_users_box")
-    fields = ['SuperTopic', 'Category', 'Id', 'Url', 'Follower', 'Posts']
-    for category in range(len(supertopic_list)):
-        topic = supertopic_list[category]
-        ActionChains(driver).click(topic).perform()
-        #center_box = driver.find_elements_by_class_name( "super_scllor")
-        print("开始下滑")
-        for i in range(1500):
-            ActionChains(driver).key_down(Keys.DOWN).perform()
-        print("滚动结束")
-        cardlist = driver.find_elements_by_class_name(
-            "card-list")[:-1]
-        print("总共有" + str(len(cardlist)))
-        for j in range(len(cardlist)):
-            element = cardlist[j]
+    fields = ['SuperTopic', 'Category', 'Id', 'Url', 'Influence', 'Follower']
+    for category in range(50):
+        for j in range(20):
+            # 第一步：点击第[category]个榜单
+            class_list = driver.find_element_by_class_name("superListBox")
+            superbox = class_list.find_element_by_id("cate_ul")
+            # 第一个榜单是“推荐”，在此不计入。html的element从1开始数
+            topic_xpath = "li[position()=" + str(category+2) + "]"
+            topic = superbox.find_element_by_xpath(topic_xpath)
+            ActionChains(driver).click(topic).perform()
+            # 第二步：获取榜单[j]个话题的信息
+            time.sleep(2)  # 等待加载
+            xpath = "//*[@class='card-list'][position()=" + str(j+1) + "]"
+            element = driver.find_element_by_xpath(xpath)
             supertopic = element.find_element_by_class_name("super_name")
             super_name = supertopic.text
-            follower = ""
-            posts = ""
-            topic_url = ""
+            disc = element.find_element_by_class_name("txt-s").text
+            influence = parseNumbers(disc.split()[0])
+            follower = parseNumbers(disc.split()[1])
             id = category*20 + j
-            result = [super_name, category, id, topic_url, follower, posts]
+            # 第2.5步：点击超话，获取话题url，返回榜单页面
+            supertopic.click()
+            redirect = driver.current_url
+            topic_url = redirect.split("3D")[1].split("%")[0]
+            result = [super_name, category, id, topic_url, influence, follower]
             print(result)
-
-    print("ready to close\n")
+            driver.back()
+    print("ready to close")
+    s = "花费时长为" + str(time.clock() - start)
+    print(s)
     driver.close()
     driver.quit()
 
@@ -104,8 +103,14 @@ def init():
 """
 
 
-def getTopic():
-    pass
+def parseNumbers(source):
+    digits = re.search("[0-9]+", source).group(0)
+    unit = re.search("\D", source).group(0)
+    if unit == "万":
+        n = str(int(digits) * 10000)
+    else:
+        n = digits
+    return n
 
 
 def Transfer_Clicks(browser):
