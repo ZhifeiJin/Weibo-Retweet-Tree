@@ -65,11 +65,12 @@ def init(url):
 
 
 def getAllSupertopics():
+    driver = init("https://huati.weibo.cn/discovery/super?suda")
     info = []
-    for category in range(50):
+    for category in range(49):
         if category in [4, 6, 8, 13]:
             continue
-        for j in range(20):
+        for j in range(1):
             # 第一步：点击第[category]个榜单
             class_list = driver.find_element_by_class_name("superListBox")
             superbox = class_list.find_element_by_id("cate_ul")
@@ -81,14 +82,10 @@ def getAllSupertopics():
             # 等待加载
             superarea = WebDriverWait(driver, 10).until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "super_area")))
-            # print(superarea.get_attribute("outerHTML"))
             step1 = "//*[@class='card-list'][position()={}]".format(j+1)
             element = driver.find_element_by_xpath(step1)
-            # print(element.get_attribute("outerHTML"))
             supertopic = element.find_element_by_class_name("super_name")
             super_name = supertopic.text
-            # print(super_name)
-            # print("success!")
             disc = element.find_element_by_class_name("txt-s").text
             influence = parseNumbers(disc.split()[0])
             follower = parseNumbers(disc.split()[1])
