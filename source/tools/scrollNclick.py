@@ -22,9 +22,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import csv
 import re
+import pandas as pd
 
 
-def init(url):
+def init(url="https://huati.weibo.cn/discovery/super?suda"):
     username = 'raymondsun97@yahoo.com'  # 微博账号
     password = '68458173'  # 微博密码
 
@@ -70,7 +71,7 @@ def getAllSupertopics():
     for category in range(49):
         if category in [4, 6, 8, 13]:
             continue
-        for j in range(1):
+        for j in range(20):
             # 第一步：点击第[category]个榜单
             class_list = driver.find_element_by_class_name("superListBox")
             superbox = class_list.find_element_by_id("cate_ul")
@@ -129,31 +130,127 @@ def saveCSV(l):
 
 
 def repostSpider():
-    s = "100808d4303cba92d6d8bf88d04b9fb3822e7a"
-    url = "https://weibo.com/p/{}/super_index".format(s)
-    driver = init(url)
-    time.sleep(10)
+    driver = init()
+    #driver.get( "https://weibo.com/p/100808da80b66fe1ef587d20501424cbca9198/super_index")
+    data = pd.read_csv("SuperTopics.csv")
+    references = data["Url"]
+    # print(references)
+    supertopic = 0
+    weibo = []
+    for row in references:
+        # print(count)
+        url = "https://weibo.com/p/{}/super_index".format(row)
+        driver.get(url)
+        try:
+            superarea = WebDriverWait(driver, 2).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "WB_feed")))  # 确认登录超话页面
+        except:
+            driver.get(url)
+        for page in range(5):
+            # 滚动到页面底部
+            for i in range(5):
+                driver.execute_script(
+                    "window.scrollBy(0,document.body.scrollHeight)", "")
+                time.sleep(2)
+            # 确认页面位置
+            next = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "next")))
+            # print(next.get_attribute("outerHTML"))
+            # 找到当前页面所有微博
+            posts = driver.find_elements_by_class_name("WB_feed_like")
+            print("当前有%d条微博" % len(posts))
+            for post in posts:
+                uid = post.get_attribute("tbinfo").split("=")[1]
+                mid = post.get_attribute("mid")
+                weibo.append([supertopic, uid, mid])
+            next.click()
+
+            time.sleep(3)
+        supertopic = supertopic + 1
+        time.sleep(10)
 
     # SuperwordRollToTheEnd()
 
 
-def SuperwordRollToTheEnd():
+def mid_to_url(midint):
+    '''
+    http://qinxuye.me/article/mid-and-url-in-sina-weibo/ 
+    >>> mid_to_url(3501756485200075)
+    'z0JH2lOMb'
+    >>> mid_to_url(3501703397689247)
+    'z0Ijpwgk7'
+    >>> mid_to_url(3501701648871479)
+    'z0IgABdSn'
+    >>> mid_to_url(3500330408906190)
+    'z08AUBmUe'
+    >>> mid_to_url(3500247231472384)
+    'z06qL6b28'
+    >>> mid_to_url(3491700092079471)
+    'yCtxn8IXR'
+    >>> mid_to_url(3486913690606804)
+    'yAt1n2xRa'
+    '''
+    midint = str(midint)[::-1]
+    size = len(midint) / 7 if len(midint) % 7 == 0 else len(midint) / 7 + 1
+    result = []
+    for i in range(size):
+        s = midint[i * 7: (i + 1) * 7][::-1]
+        s = base62_encode(int(s))
+        s_len = len(s)
+        if i < size - 1 and len(s) < 4:
+            s = '0' * (4 - s_len) + s
+        result.append(s)
+    result.reverse()
+    return ''.join(result)
+
+
+def base62_encode(num):
+    """Encode a number in Base X
+
+    `num`: The number to encode
+    `alphabet`: The alphabet to use for encoding
+    """
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if (num == 0):
+        return alphabet[0]
+    arr = []
+    base = len(alphabet)
+    while num:
+        rem = num % base
+        num = num // base
+        arr.append(alphabet[rem])
+    arr.reverse()
+    return ''.join(arr)
+
+
+def SuperwordRollToTheEnd(browser):
+    print("transfering clicks")
+    try:
+        browser.execute_script(
+            "window.scrollBy(0,document.body.scrollHeight)", "")
+    except:
+        pass
+    return "Transfer successfully \n"
+
+
+def SuperwordRollToTheEnd(driver):
+    print("scrollin to the end")
     before = 0
     after = 0
     n = 0
     timeToSleep = 50
-    while True:
+    for i in range(3):
         before = after
         Transfer_Clicks(driver)
         time.sleep(3)
-        elems = driver.find_elements_by_css_selector('div.m-box')
-        print("当前包含超话最大数量:%d,n当前的值为:%d,当n为5无法解析出新的超话" % (len(elems), n))
-        after = len(elems)
+        #elems = driver.find_elements_by_css_selector('div.WB_feed')
+        #print("当前包含超话最大数量:%d,n当前的值为:%d,当n为5无法解析出新的超话" % (len(elems), n))
+        #after = len(elems)
         if after > before:
             n = 0
         if after == before:
             n = n + 1
-        if n == 5:
+        if n == 3:
             print("当前包含最大超话数为：%d" % after)
             break
         if after > timeToSleep:

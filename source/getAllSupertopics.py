@@ -17,9 +17,12 @@ def saveAllSupertopic():
     browser.saveCSV(info)
 
 
+def getWeibo():
+    browser.repostSpider()
+
+
 def main():
-    info = browser.getAllSupertopics()
-    browser.saveCSV(info)
+    getWeibo()
 
 
 if __name__ == '__main__':
