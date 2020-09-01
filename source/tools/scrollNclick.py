@@ -24,11 +24,11 @@ import csv
 import re
 import pandas as pd
 
+username = 'raymondsun97@yahoo.com'  # 微博账号
+password = '68458173'  # 微博密码
+
 
 def init(url="https://huati.weibo.cn/discovery/super?suda"):
-    username = 'raymondsun97@yahoo.com'  # 微博账号
-    password = '68458173'  # 微博密码
-
     driver = webdriver.Chrome(
         executable_path="/Users/jinzhifei/anaconda3/lib/python3.7/site-packages/selenium/webdriver/chrome/chromedriver")
     driver.maximize_window()
@@ -47,7 +47,7 @@ def init(url="https://huati.weibo.cn/discovery/super?suda"):
     resp = s.post(url, params)  # I get a 200 status_code
 
     # passing the cookie of the response to the browser
-    driver.delete_all_cookies()
+    # driver.delete_all_cookies()
     dict_resp_cookies = resp.cookies.get_dict()
     response_cookies_browser = [{'name': name, 'value': value}
                                 for name, value in dict_resp_cookies.items()]
@@ -164,8 +164,18 @@ def repostSpider():
                 mid = post.get_attribute("mid")
                 weibo.append([supertopic, uid, mid])
             next.click()
-
-            time.sleep(3)
+            login = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "layer_login_register_v2")))
+            # time.sleep(5)
+            #login = driver.find_element_by_class_name("layer_login_register_v2")
+            # print(login.get_attribute("outerHTML"))
+            elem = login.find_element_by_xpath("//input[@name='username']")
+            elem.send_keys(username)
+            elem = login.find_element_by_xpath("//input[@name='password']")
+            elem.send_keys(password)
+            elem = login.find_element_by_xpath("//a[@class='W_btn_a']")
+            elem.click()
+            time.sleep(15)
         supertopic = supertopic + 1
         time.sleep(10)
 
