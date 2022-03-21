@@ -25,7 +25,7 @@ def main():
     end = int(input())
     print("Input new: 1 for True, 0 for False")
     new = bool(int(input()))
-    saveAllSupertopic(start, end, new)
+    getWeibo(start, end, new)
 
 
 if __name__ == '__main__':
