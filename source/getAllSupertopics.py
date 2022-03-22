@@ -1,8 +1,6 @@
 #import tools.login as login
 import scrollNclick as browser
 import time
-#import sys
-# sys.path.append('../')
 
 
 def saveAllSupertopic(start, end, new):
@@ -15,7 +13,8 @@ def saveAllSupertopic(start, end, new):
 def getWeibo(start, end, new):
     info = browser.repostSpider(start, end)
     print("saving weibos")
-    browser.saveCSV(info, new, 'Reposts.csv', ['SuperTopic', 'mid', 'uid'])
+    browser.saveCSV(info, new, 'Reposts.csv', [
+                    'SuperTopic', 'mid', 'uid', 'text', 'forward', 'comment', 'like'])
 
 
 def main():
